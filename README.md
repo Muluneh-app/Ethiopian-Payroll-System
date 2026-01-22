@@ -1,102 +1,54 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ethiopian Payroll Calculator</title>
-    <link href="output.css" rel="stylesheet">
-</head>
-<body class="bg-gray-300 flex items-center justify-center min-h-screen">
+A web-based payroll calculator designed for Ethiopian companies, built entirely with HTML, Tailwind CSS, and JavaScript. This system allows you to manage multiple employees, calculate salaries, and display payroll data in a clean, responsive table — all without any backend server.
 
-  <div class="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow">
-    <h1 class="text-4xl font-bold text-green-700 mb-4">
-    Ethiopian Payroll System (Multiple Employees)
-    </h1>
+💡 Features
 
-    <!-- Input Form -->
-    <div class="grid md:grid-cols-3 gap-4 mb-6">
-      <input id="name" type="text" placeholder="Employee Name"
-        class="border p-3 rounded-lg font-bold text-4xl">
-      <input id="gross" type="number" placeholder="Gross Salary (ETB)"
-        class="border p-3 rounded-lg text-4xl font-bold ">
-      <button onclick="addEmployee()"
-        class="bg-green-600 text-white rounded-lg text-4xl font-bold hover:bg-green-700">
-        Add Employee
-      </button>
-    </div>
+Add Multiple Employees: Quickly enter employee name and gross salary.
 
-    <!-- Payroll Table -->
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse">
-        <thead class="bg-green-600 text-white">
-          <tr>
-            <th class="p-3 border text-4xl">#</th>
-            <th class="p-3 border text-4xl">Name</th>
-            <th class="p-3 border text-4xl">Gross</th>
-            <th class="p-3 border text-4xl">Pension (7%)</th>
-            <th class="p-3 border text-4xl">Tax</th>
-            <th class="p-3 border text-4xl">Net Salary</th>
-          </tr>
-        </thead>
-        <tbody id="payrollBody" class="text-center"></tbody>
-      </table>
-    </div>
-  </div>
+Automatic Calculations:
 
-<script>
-let employees = [];
+Pension (7%)
 
-function calculateTax(gross) {
-  if (gross <= 2000) return 0;
-  if (gross <= 4000) return (gross * 0.15)-300;
-  if (gross <= 7000) return (gross * 0.20)-500;
-  if (gross <= 10000) return (gross * 0.25)-850;
-  if (gross <= 14000) return (gross * 0.30)-1350;
-  else return (gross * 0.35)-2050;
-}
+Income Tax based on Ethiopian progressive tax brackets
 
-function addEmployee() {
-  const name = document.getElementById("name").value;
-  const gross = Number(document.getElementById("gross").value);
+Net Salary after deductions
 
-  if (!name || gross <= 0) {
-    alert("Enter valid employee data");
-    return;
-  }
+Responsive Table: Displays all employee payroll data with proper formatting.
 
-  const pension = gross * 0.07;
-  const tax = calculateTax(gross);
-  const net = gross - pension - tax;
+Tailwind 4XL Typography: Large, readable fonts for clear visibility.
 
-  employees.push({ name, gross, pension, tax, net });
-  renderTable();
+Mobile-Friendly & Modern UI: Works on desktop and mobile devices.
 
-  document.getElementById("name").value = "";
-  document.getElementById("gross").value = "";
-}
+🛠 Technology Stack
 
-function renderTable() {
-  const body = document.getElementById("payrollBody");
-  body.innerHTML = "";
+HTML5 – Structure and layout
 
-  employees.forEach((e, i) => {
-    body.innerHTML += `
-      <tr class="hover:bg-gray-50">
-        <td class="border p-2 text-4xl font-bold">${i + 1}</td>
-        <td class="border p-2 text-4xl font-bold">${e.name}</td>
-        <td class="border p-2 text-4xl font-bold">${e.gross.toFixed(2)}</td>
-        <td class="border p-2 text-4xl font-bold">${e.pension.toFixed(2)}</td>
-        <td class="border p-2 text-4xl font-bold">${e.tax.toFixed(2)}</td>
-        <td class="border p-2 text-4xl font-bold">
-          ${e.net.toFixed(2)}
-        </td>
-      </tr>
-    `;
-  });
-}
-</script>
+Tailwind CSS – Styling and responsive design
 
-</body>
-</html>
-# payroll-system
-Ethiopian Payroll System – A lightweight, browser-based payroll calculator for Ethiopian companies. Built with HTML, Tailwind CSS, and JavaScript, it allows multiple employees to be added, automatically calculates pension, tax, and net salary, and displays payroll data in a clean, responsive table. Ideal for SMEs, educational purposes.
+JavaScript – Payroll calculation and dynamic table rendering
+
+📈 How It Works
+
+Enter employee name and gross salary.
+
+Click “Add Employee”.
+
+The system calculates:
+
+Pension (7%)
+
+Tax (according to Ethiopian tax brackets)
+
+Net salary
+
+Displays the data in a dynamic, scrollable table.
+
+Repeat to add multiple employees — table updates in real-time.
+
+📌 Ethiopian Tax Brackets Used
+Gross Salary (ETB)	Tax Rate
+0 – 2000	0%
+2001 – 4000	15% - 300
+4001 – 7000	20% - 500
+7001 – 10000	25% - 850
+10001 – 14000	30% - 1350
+14001+	35% - 2050
