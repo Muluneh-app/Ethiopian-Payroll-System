@@ -1,0 +1,220 @@
+function setDBCredentials() {
+  PropertiesService.getScriptProperties().setProperties({
+DB_URL: "jdbc:mysql://host:3306/database",
+    DB_USER: "user",
+    DB_PASS: "password"
+  });
+}
+
+function getConnection() {
+  const props = PropertiesService.getScriptProperties();
+  return Jdbc.getConnection(
+    props.getProperty("DB_URL"),
+    props.getProperty("DB_USER"),
+    props.getProperty("DB_PASS")
+  );
+}
+/*******************************
+ * WEB APP ENTRY
+ *******************************/
+function doGet() {
+  return HtmlService.createHtmlOutput(getHtml())
+    .setTitle("Payroll System")
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/*******************************
+ * SAVE EMPLOYEE
+ *******************************/
+function saveEmployee(emp) {
+  const conn = getConnection();
+
+  const stmt = conn.prepareStatement(`
+    INSERT INTO employees (name, gross, pension, tax, net)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+
+  stmt.setString(1, emp.name);
+  stmt.setDouble(2, emp.gross);
+  stmt.setDouble(3, emp.pension);
+  stmt.setDouble(4, emp.tax);
+  stmt.setDouble(5, emp.net);
+
+  stmt.execute();
+  stmt.close();
+  conn.close();
+
+  return "✅ Employee saved successfully";
+}
+
+/*******************************
+ * GET EMPLOYEES
+ *******************************/
+function getEmployees() {
+  const conn = getConnection();
+  const stmt = conn.createStatement();
+  const rs = stmt.executeQuery("SELECT * FROM employees ORDER BY id DESC");
+
+  const data = [];
+
+  while (rs.next()) {
+    data.push({
+      id: rs.getInt("id"),
+      name: rs.getString("name"),
+      gross: rs.getDouble("gross"),
+      pension: rs.getDouble("pension"),
+      tax: rs.getDouble("tax"),
+      net: rs.getDouble("net")
+    });
+  }
+
+  rs.close();
+  stmt.close();
+  conn.close();
+
+  return data;
+}
+
+/*******************************
+ * HTML UI
+ *******************************/
+function getHtml() {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-200 min-h-screen flex items-center justify-center">
+
+<div class="max-w-5xl w-full bg-white p-6 rounded-xl shadow">
+
+  <h1 class="text-3xl font-bold text-green-700 mb-6">
+    Ethiopian Payroll System
+  </h1>
+
+  <!-- INPUT -->
+  <div class="grid md:grid-cols-3 gap-4 mb-6">
+    <input id="name" type="text" placeholder="Employee Name"
+      class="border p-3 rounded-lg">
+
+    <input id="gross" type="number" placeholder="Gross Salary (ETB)"
+      class="border p-3 rounded-lg">
+
+    <button onclick="addEmployee()"
+      class="bg-green-600 text-white rounded-lg hover:bg-green-700">
+      Add Employee
+    </button>
+  </div>
+
+  <!-- TABLE -->
+  <div class="overflow-x-auto">
+    <table class="w-full border-collapse border">
+      <thead class="bg-green-600 text-white">
+        <tr>
+          <th class="p-2 border">#</th>
+          <th class="p-2 border">Name</th>
+          <th class="p-2 border">Gross</th>
+          <th class="p-2 border">Pension (7%)</th>
+          <th class="p-2 border">Tax</th>
+          <th class="p-2 border">Net</th>
+        </tr>
+      </thead>
+      <tbody id="payrollBody" class="text-center"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+/*******************************
+ * TAX CALCULATION
+ *******************************/
+function calculateTax(gross) {
+  if (gross <= 2000) return 0;
+  if (gross <= 4000) return (gross * 0.15) - 300;
+  if (gross <= 7000) return (gross * 0.20) - 500;
+  if (gross <= 10000) return (gross * 0.25) - 850;
+  if (gross <= 14000) return (gross * 0.30) - 1350;
+  return (gross * 0.35) - 2050;
+}
+
+/*******************************
+ * ADD EMPLOYEE
+ *******************************/
+function addEmployee() {
+  const name = document.getElementById("name").value.trim();
+  const gross = Number(document.getElementById("gross").value);
+
+  if (!name || gross <= 0) {
+    alert("Enter valid employee data");
+    return;
+  }
+
+  const pension = gross * 0.07;
+  const tax = calculateTax(gross);
+  const net = gross - pension - tax;
+
+  const employee = { name, gross, pension, tax, net };
+
+  google.script.run
+    .withSuccessHandler(msg => {
+      alert(msg);
+      loadEmployees();
+    })
+    .saveEmployee(employee);
+
+  document.getElementById("name").value = "";
+  document.getElementById("gross").value = "";
+}
+
+/*******************************
+ * LOAD EMPLOYEES
+ *******************************/
+function loadEmployees() {
+  google.script.run.withSuccessHandler(data => {
+    const body = document.getElementById("payrollBody");
+    body.innerHTML = "";
+
+    data.forEach((e, i) => {
+      body.innerHTML += \`
+        <tr class="hover:bg-gray-50">
+          <td class="border p-2">\${i + 1}</td>
+          <td class="border p-2">\${e.name}</td>
+          <td class="border p-2">\${e.gross.toFixed(2)}</td>
+          <td class="border p-2">\${e.pension.toFixed(2)}</td>
+          <td class="border p-2">\${e.tax.toFixed(2)}</td>
+          <td class="border p-2 font-bold">\${e.net.toFixed(2)}</td>
+        </tr>
+      \`;
+    });
+  }).getEmployees();
+}
+
+window.onload = loadEmployees;
+</script>
+
+</body>
+</html>
+`;
+}
+
+/*******************************
+ * DATABASE SETUP
+ * CREATE DATABASE payroll_db;
+USE payroll_db;
+
+CREATE TABLE employees (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255),
+  gross DECIMAL(10,2),
+  pension DECIMAL(10,2),
+  tax DECIMAL(10,2),
+  net DECIMAL(10,2),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+ *******************************/
+
+
